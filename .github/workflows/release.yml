@@ -1,0 +1,66 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-18 lld-18 llvm-18
+          wget -q https://github.com/ps5-payload-dev/pacbrew-repo/releases/latest/download/ps5-payload-dev.tar.gz
+          sudo tar xf ps5-payload-dev.tar.gz -C /
+
+      - name: Check the tag matches VERSION
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: test "${GITHUB_REF_NAME#v}" = "$(cat VERSION)"
+
+      - name: Host tests
+        run: |
+          python3 -m pip install --quiet cryptography
+          make test PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
+
+      - name: Build
+        run: |
+          make all PS5_PAYLOAD_SDK=/opt/ps5-payload-sdk
+          sha256sum dist/airplay-installer.elf | tee dist/airplay-installer.elf.sha256
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: airplay-installer
+          path: dist/airplay-installer.elf*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download
+        uses: actions/download-artifact@v4
+        with:
+          name: airplay-installer
+          path: .
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: PS5 AirPlay ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            airplay-installer.elf
+            airplay-installer.elf.sha256
