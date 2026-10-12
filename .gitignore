@@ -1,0 +1,12 @@
+build/
+dist/
+output/
+.playwright-cli/
+.DS_Store
+__pycache__/
+*.o
+*.elf
+third_party/openh264/
+third_party/alac/libalac.a
+third_party/fdk-aac/libfdk-decoder.a
+docs/
