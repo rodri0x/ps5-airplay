@@ -12,6 +12,11 @@ https://github.com/user-attachments/assets/6a3c0855-d9c1-421c-8dd3-5f5688562d38
 
 <p align="center"><sub>An iPhone playing Instagram Reels, recorded with the console's own capture.</sub></p>
 
+<p align="center">
+  <img src="media/mac-mirroring.png" alt="A Mac mirroring its desktop to the receiver" width="720">
+</p>
+<p align="center"><sub>A Mac mirroring its desktop: the receiver shows up in Screen Mirroring like an Apple TV.</sub></p>
+
 ## What it does
 
 | | |
