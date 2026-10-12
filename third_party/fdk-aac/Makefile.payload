@@ -1,0 +1,50 @@
+# Decoder-only FDK-AAC build for the unsigned PS5 payload.
+# The encoder, SAC and SBR encoder trees are deliberately excluded.
+
+CC ?= cc
+CXX ?= c++
+AR ?= ar
+CXXFLAGS ?= -O2 -fPIC
+
+ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+INCLUDES := \
+	-I$(ROOT)libAACdec/include \
+	-I$(ROOT)libArithCoding/include \
+	-I$(ROOT)libArithCoding/src \
+	-I$(ROOT)libDRCdec/include \
+	-I$(ROOT)libFDK/include \
+	-I$(ROOT)libMpegTPDec/include \
+	-I$(ROOT)libPCMutils/include \
+	-I$(ROOT)libSBRdec/include \
+	-I$(ROOT)libSACdec/include \
+	-I$(ROOT)libSYS/include \
+	-I$(ROOT)libAACdec/src \
+	-I$(ROOT)libDRCdec/src \
+	-I$(ROOT)libFDK/src \
+	-I$(ROOT)libMpegTPDec/src \
+	-I$(ROOT)libPCMutils/src \
+	-I$(ROOT)libSBRdec/src \
+	-I$(ROOT)libSACdec/src \
+	-I$(ROOT)libSYS/src
+
+SOURCES := $(wildcard $(ROOT)libAACdec/src/*.cpp) \
+	$(wildcard $(ROOT)libArithCoding/src/*.cpp) \
+	$(wildcard $(ROOT)libDRCdec/src/*.cpp) \
+	$(wildcard $(ROOT)libFDK/src/*.cpp) \
+	$(wildcard $(ROOT)libMpegTPDec/src/*.cpp) \
+	$(wildcard $(ROOT)libPCMutils/src/*.cpp) \
+	$(wildcard $(ROOT)libSBRdec/src/*.cpp) \
+	$(wildcard $(ROOT)libSACdec/src/*.cpp) \
+	$(wildcard $(ROOT)libSYS/src/*.cpp)
+OBJECTS := $(SOURCES:.cpp=.payload.o)
+
+libfdk-decoder.a: $(OBJECTS)
+	$(AR) crD $@ $^
+
+%.payload.o: %.cpp
+	$(CXX) $(CXXFLAGS) -w $(INCLUDES) -c -o $@ $<
+
+.PHONY: clean
+clean:
+	find $(ROOT) -type f -name '*.payload.o' -delete
+	find $(ROOT) -maxdepth 1 -name '*.a' -delete
