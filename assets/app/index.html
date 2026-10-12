@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en" manifest="/cache.appcache">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PS5 AirPlay</title>
+  <style>
+    :root {
+      --bg: #171a1d;
+      --bg-deep: #111416;
+      --panel: #33373b;
+      --panel-hover: #3e4348;
+      --text: #f3f4f5;
+      --muted: #a6aaae;
+      --quiet: #747a80;
+      --accent: #55b9ff;
+      --good: #67d39a;
+      --warn: #ffbf68;
+    }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; }
+    body {
+      overflow: hidden;
+      color: var(--text);
+      background: radial-gradient(ellipse at 50% 10%, #252a2e 0, var(--bg) 45%, var(--bg-deep) 100%);
+      font-family: Arial, Helvetica, sans-serif;
+      letter-spacing: .01em;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .shell {
+      width: min(1180px, 94vw);
+      height: 100%;
+      margin: 0 auto;
+      padding: 32px 0 22px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+    }
+    header { text-align: center; }
+    h1 {
+      margin: 0;
+      color: #9da2a6;
+      font-size: clamp(28px, 3.1vw, 47px);
+      font-weight: 700;
+      letter-spacing: -.035em;
+    }
+    .subtitle { margin: 9px 0 0; color: var(--quiet); font-size: 14px; }
+    .content {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(360px, .94fr) minmax(480px, 1.1fr);
+      gap: clamp(28px, 5vw, 70px);
+      align-items: center;
+    }
+    .identity { text-align: center; }
+    .device-card {
+      width: min(360px, 31vw);
+      aspect-ratio: 1 / 1;
+      min-width: 290px;
+      margin: 0 auto 29px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 76px;
+      background: linear-gradient(145deg, #6b7074, #4d5256);
+      box-shadow: 0 22px 50px rgba(0, 0, 0, .32), inset 0 1px rgba(255,255,255,.12);
+    }
+    .device-mark { width: 72%; height: 72%; }
+    .device-mark .word { fill: #151719; font-size: 98px; font-weight: 700; letter-spacing: -8px; }
+    .device-mark .wave { fill: none; stroke: #151719; stroke-linecap: round; }
+    .device-mark .wave.a { stroke-width: 17; }
+    .device-mark .wave.b { stroke-width: 13; }
+    .device-mark .dot { fill: #151719; }
+    .identity-copy {
+      max-width: 560px;
+      margin: 0 auto;
+      color: #aeb2b5;
+      font-size: 17px;
+      line-height: 1.45;
+    }
+    .identity-copy strong { color: #dce0e2; font-weight: 600; }
+    .hint { margin-top: 14px; color: #777d81; font-size: 14px; }
+    .settings { min-width: 0; }
+    .section-label {
+      margin: 0 0 9px 14px;
+      color: #858b90;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .section-label:not(:first-child) { margin-top: 27px; }
+    .rows { display: grid; gap: 8px; }
+    .row {
+      width: 100%;
+      min-height: 53px;
+      padding: 0 18px 0 20px;
+      border: 0;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: var(--panel);
+      color: var(--text);
+      text-align: left;
+      font-size: 21px;
+      transition: background .14s ease, transform .14s ease;
+    }
+    .row.action { cursor: pointer; }
+    .row.action:hover, .row.action:focus { background: var(--panel-hover); outline: 0; }
+    .row.action:focus { box-shadow: 0 0 0 2px var(--accent); }
+    .row.action:active { transform: scale(.995); }
+    .row.primary { background: #fafafa; color: #17191b; }
+    .row.primary:hover, .row.primary:focus { background: #fff; }
+    .row-label { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .value {
+      flex: 0 0 auto;
+      max-width: 58%;
+      color: #aeb2b5;
+      font-size: 19px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: right;
+    }
+    .primary .value { color: #94999d; }
+    .chevron { color: #858b90; font-size: 34px; line-height: .5; font-weight: 300; }
+    .switch {
+      position: relative;
+      width: 44px;
+      height: 26px;
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 13px;
+      background: #737a80;
+      cursor: pointer;
+    }
+    .switch:after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #f7f7f7;
+      transition: transform .16s ease;
+    }
+    .switch.on { background: #2b95df; }
+    .switch.on:after { transform: translateX(18px); }
+    .switch:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .status-line { min-height: 20px; margin: 10px 14px 0; color: var(--quiet); font-size: 13px; }
+    .status-line.ready { color: var(--good); }
+    .status-line.warn { color: var(--warn); }
+    footer { display: flex; justify-content: space-between; gap: 16px; color: #6f757a; font-size: 13px; }
+    footer span:last-child { text-align: right; }
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      display: none;
+      place-items: center;
+      padding: 24px;
+      background: rgba(0,0,0,.65);
+    }
+    .modal.open { display: grid; }
+    .dialog {
+      width: min(470px, 92vw);
+      padding: 26px;
+      border: 1px solid #4d555d;
+      border-radius: 16px;
+      background: #252a2f;
+      box-shadow: 0 24px 70px #000;
+    }
+    .dialog h2 { margin: 0 0 7px; font-size: 25px; }
+    .dialog p { margin: 0 0 18px; color: var(--muted); line-height: 1.4; }
+    .dialog input {
+      width: 100%;
+      padding: 12px 13px;
+      border: 1px solid #5c656d;
+      border-radius: 8px;
+      outline: 0;
+      background: #15181b;
+      color: #fff;
+    }
+    .dialog input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(85,185,255,.22); }
+    .dialog-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+    .dialog-actions button { padding: 10px 16px; border: 0; border-radius: 8px; background: #414a52; cursor: pointer; }
+    .dialog-actions .save { background: #1986ca; }
+    .options { display: grid; gap: 10px; }
+    .option {
+      width: 100%;
+      padding: 13px 15px;
+      border: 1px solid #4d555d;
+      border-radius: 10px;
+      background: #15181b;
+      color: var(--text);
+      text-align: left;
+      cursor: pointer;
+    }
+    .option:hover, .option:focus { border-color: var(--accent); outline: 0; box-shadow: 0 0 0 2px rgba(85,185,255,.22); }
+    .option.selected { border-color: #2b95df; background: #17324a; }
+    .option strong { display: block; font-size: 19px; font-weight: 600; }
+    .option span { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; line-height: 1.35; }
+    @media (max-width: 880px) {
+      body { overflow: auto; }
+      .shell { height: auto; min-height: 100%; padding: 28px 0; }
+      .content { grid-template-columns: 1fr; gap: 28px; }
+      .device-card { width: min(320px, 70vw); }
+      .identity-copy { max-width: 520px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <h1>PS5 AirPlay</h1>
+      <p class="subtitle">AirPlay for Apple devices on your local network</p>
+    </header>
+
+    <main class="content">
+      <section class="identity" aria-label="PS5 AirPlay receiver">
+        <div class="device-card">
+          <svg class="device-mark" viewBox="0 0 320 320" role="img" aria-label="PS5 AirPlay">
+            <g transform="translate(0 42)">
+              <path class="wave a" d="M62 142c52-54 144-54 196 0"/>
+              <path class="wave b" d="M97 180c34-33 92-33 126 0"/>
+              <circle class="dot" cx="160" cy="214" r="13"/>
+            </g>
+            <text class="word" x="160" y="121" text-anchor="middle">PS5</text>
+          </svg>
+        </div>
+        <p class="identity-copy">With AirPlay, you can stream what’s on your iPhone or computer to this <strong>PS5</strong>.</p>
+        <p class="hint">Open Control Center → Screen Mirroring</p>
+      </section>
+
+      <section class="settings" aria-label="AirPlay settings">
+        <p class="section-label">AIRPLAY</p>
+        <div class="rows">
+          <div class="row primary">
+            <span class="row-label">AirPlay</span>
+            <button id="enabled-switch" class="switch on" type="button" aria-label="Toggle AirPlay" aria-pressed="true"></button>
+          </div>
+        </div>
+
+        <p class="section-label">RECEIVER</p>
+        <div class="rows">
+          <button class="row action" id="name-row" type="button">
+            <span class="row-label">Name</span><span id="name-value" class="value">#NODISCNOBUY</span><span class="chevron">›</span>
+          </button>
+          <button class="row action" id="passcode-row" type="button">
+            <span class="row-label">Passcode</span><span id="passcode-value" class="value">Off</span><span class="chevron">›</span>
+          </button>
+          <button class="row action" id="mode-row" type="button">
+            <span class="row-label">Mode</span><span id="mode-value" class="value">Balanced</span><span class="chevron">›</span>
+          </button>
+        </div>
+        <p id="status-line" class="status-line">Checking AirPlay receiver…</p>
+      </section>
+    </main>
+
+    <footer>
+      <span id="footer-version">PS5 AirPlay</span>
+      <span id="footer-status">Starting local receiver</span>
+    </footer>
+  </div>
+
+  <div id="name-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="name-title">
+    <div class="dialog">
+      <h2 id="name-title">Name</h2>
+      <p>This is the name shown in iPhone Screen Mirroring.</p>
+      <input id="name-input" maxlength="48" autocomplete="off" spellcheck="false">
+      <div class="dialog-actions">
+        <button id="cancel-name" type="button">Cancel</button>
+        <button id="save-name" class="save" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="passcode-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="passcode-title">
+    <div class="dialog">
+      <h2 id="passcode-title">Passcode</h2>
+      <p>Four digits. A device is asked for it the first time it connects.</p>
+      <input id="passcode-input" type="password" inputmode="numeric" maxlength="4" autocomplete="off">
+      <div class="dialog-actions">
+        <button id="cancel-passcode" type="button">Cancel</button>
+        <button id="off-passcode" type="button">Turn Off</button>
+        <button id="save-passcode" class="save" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mode-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="mode-title">
+    <div class="dialog">
+      <h2 id="mode-title">Mode</h2>
+      <p>How far behind your device the picture and sound are played. More delay hides Wi-Fi hiccups; less delay feels more immediate.</p>
+      <div class="options">
+        <button class="option" type="button" data-mode="quality">
+          <strong>Quality</strong>
+          <span>Smoothest picture and sound. About 0.2 s behind your device. Best for watching video.</span>
+        </button>
+        <button class="option" type="button" data-mode="balanced">
+          <strong>Balanced</strong>
+          <span>About 0.12 s behind. Smooth on a good Wi-Fi, with an occasional short gap in the sound.</span>
+        </button>
+        <button class="option" type="button" data-mode="performance">
+          <strong>Performance</strong>
+          <span>Least delay, about 0.06 s. Best for menus and presenting; may stutter when the Wi-Fi is busy.</span>
+        </button>
+      </div>
+      <div class="dialog-actions">
+        <button id="cancel-mode" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+    var CONTROL = 'http://127.0.0.1:18182';
+    var ELFLDR = 'http://127.0.0.1:9021/?uri=' + encodeURIComponent('file:/data/ps5-airplay/ps5airplay.elf');
+    var state = { name: '#NODISCNOBUY', enabled: true, passcodeSet: false, mode: 'balanced' };
+    var MODE_NAMES = { quality: 'Quality', balanced: 'Balanced', performance: 'Performance' };
+    var enabledSwitch = document.getElementById('enabled-switch');
+    var nameValue = document.getElementById('name-value');
+    var passcodeValue = document.getElementById('passcode-value');
+    var statusLine = document.getElementById('status-line');
+    var footerStatus = document.getElementById('footer-status');
+    var footerVersion = document.getElementById('footer-version');
+    var nameModal = document.getElementById('name-modal');
+    var nameInput = document.getElementById('name-input');
+    var passcodeModal = document.getElementById('passcode-modal');
+    var passcodeInput = document.getElementById('passcode-input');
+    var modeValue = document.getElementById('mode-value');
+    var modeModal = document.getElementById('mode-modal');
+    var modeOptions = modeModal.querySelectorAll('.option');
+
+    function setStatus(message, kind) {
+      statusLine.textContent = message;
+      statusLine.className = 'status-line' + (kind ? ' ' + kind : '');
+      footerStatus.textContent = message;
+    }
+    function setSwitch(element, on) {
+      element.className = 'switch' + (on ? ' on' : '');
+      element.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    function draw(next) {
+      state = next;
+      nameValue.textContent = state.name;
+      setSwitch(enabledSwitch, state.enabled);
+      passcodeValue.textContent = state.passcodeSet ? 'On' : 'Off';
+      modeValue.textContent = MODE_NAMES[state.mode] || MODE_NAMES.balanced;
+      if (state.version) footerVersion.textContent = 'PS5 AirPlay ' + state.version;
+      setStatus(state.enabled ? 'AirPlay discovery is ready' : 'AirPlay is off', state.enabled ? 'ready' : 'warn');
+    }
+    function getStatus() {
+      return fetch(CONTROL + '/api/status', { cache: 'no-store' }).then(function (response) {
+        if (!response.ok) throw new Error('control HTTP ' + response.status);
+        return response.json();
+      });
+    }
+    function saveSettings(values) {
+      return fetch(CONTROL + '/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+        cache: 'no-store'
+      }).then(function (response) {
+        if (!response.ok) throw new Error('settings HTTP ' + response.status);
+        return response.json();
+      }).then(function (next) {
+        draw(next);
+        return next;
+      });
+    }
+    function launchReceiver() {
+      return fetch(ELFLDR, { mode: 'cors', cache: 'no-store' }).then(function (response) {
+        if (!response.ok) throw new Error('elfldr HTTP ' + response.status);
+        return response.text();
+      });
+    }
+    function waitForReceiver(attempt) {
+      return getStatus().catch(function () {
+        if (attempt >= 20) throw new Error('AirPlay receiver did not start');
+        return new Promise(function (resolve) { setTimeout(resolve, 350); }).then(function () {
+          return waitForReceiver(attempt + 1);
+        });
+      });
+    }
+    function boot() {
+      setStatus('Checking the local AirPlay receiver…');
+      getStatus().catch(function () {
+        setStatus('Starting PS5 AirPlay…');
+        return launchReceiver();
+      }).then(function () {
+        return waitForReceiver(0);
+      }).then(function (next) {
+        draw(next);
+      }).catch(function (error) {
+        setStatus('Start elfldr first, then open PS5 AirPlay again', 'warn');
+        footerStatus.textContent = error.message;
+      });
+    }
+    function failed(message, error) {
+      setStatus(message, 'warn');
+      footerStatus.textContent = error.message;
+    }
+
+    enabledSwitch.addEventListener('click', function () {
+      saveSettings({ enabled: !state.enabled }).catch(function (error) {
+        failed('Could not change AirPlay state', error);
+      });
+    });
+    document.getElementById('name-row').addEventListener('click', function () {
+      nameInput.value = state.name;
+      nameModal.className = 'modal open';
+      nameInput.focus();
+      nameInput.select();
+    });
+    document.getElementById('cancel-name').addEventListener('click', function () {
+      nameModal.className = 'modal';
+    });
+    document.getElementById('save-name').addEventListener('click', function () {
+      var name = nameInput.value.replace(/^\s+|\s+$/g, '');
+      if (!name) return;
+      saveSettings({ name: name }).then(function () {
+        nameModal.className = 'modal';
+      }).catch(function (error) {
+        failed('That receiver name is not valid', error);
+      });
+    });
+    document.getElementById('mode-row').addEventListener('click', function () {
+      var selected = null;
+      for (var i = 0; i < modeOptions.length; i++) {
+        var current = modeOptions[i].getAttribute('data-mode') === state.mode;
+        modeOptions[i].className = 'option' + (current ? ' selected' : '');
+        if (current) selected = modeOptions[i];
+      }
+      modeModal.className = 'modal open';
+      (selected || modeOptions[0]).focus();
+    });
+    document.getElementById('cancel-mode').addEventListener('click', function () {
+      modeModal.className = 'modal';
+    });
+    for (var optionIndex = 0; optionIndex < modeOptions.length; optionIndex++) {
+      modeOptions[optionIndex].addEventListener('click', function () {
+        saveSettings({ mode: this.getAttribute('data-mode') }).then(function () {
+          modeModal.className = 'modal';
+        }).catch(function (error) {
+          failed('Could not change the mode', error);
+        });
+      });
+    }
+    document.getElementById('passcode-row').addEventListener('click', function () {
+      passcodeInput.value = '';
+      passcodeModal.className = 'modal open';
+      passcodeInput.focus();
+    });
+    document.getElementById('cancel-passcode').addEventListener('click', function () {
+      passcodeModal.className = 'modal';
+    });
+    document.getElementById('off-passcode').addEventListener('click', function () {
+      saveSettings({ passcode: '' }).then(function () {
+        passcodeModal.className = 'modal';
+      }).catch(function (error) {
+        failed('Could not turn the passcode off', error);
+      });
+    });
+    document.getElementById('save-passcode').addEventListener('click', function () {
+      var code = passcodeInput.value.replace(/\s+/g, '');
+      if (!/^[0-9]{4}$/.test(code)) {
+        setStatus('The passcode must be four digits', 'warn');
+        return;
+      }
+      saveSettings({ passcode: code }).then(function () {
+        passcodeModal.className = 'modal';
+      }).catch(function (error) {
+        failed('Could not save the passcode', error);
+      });
+    });
+    boot();
+  }());
+  </script>
+</body>
+</html>

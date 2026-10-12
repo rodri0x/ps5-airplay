@@ -1,0 +1,11 @@
+{
+    "titleId": "AIRP00001",
+    "applicationCategoryType": 65536,
+    "deeplinkUri": "http://127.0.0.1:18186/app/index.html",
+    "localizedParameters": {
+        "defaultLanguage": "en-US",
+        "en-US": {
+            "titleName": "PS5 AirPlay"
+        }
+    }
+}

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en" manifest="/cache.appcache">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PS5 AirPlay installer</title>
+  <style>
+    html, body { height: 100%; margin: 0; background: #10141f; color: #f5f7fb; font-family: sans-serif; }
+    body { display: grid; place-items: center; text-align: center; }
+    main { max-width: 760px; padding: 3rem; }
+    h1 { color: #55d6ff; }
+    #status { color: #b7c1d5; white-space: pre-wrap; }
+    .check { margin: .4rem 0 0; color: #7d879c; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>PS5 AirPlay</h1>
+    <p id="status">Registering the PS5 AirPlay shortcut and caching the launcher…</p>
+    <p id="register" class="check">Home screen registration: waiting</p>
+    <p id="cache" class="check">Offline cache: caching</p>
+  </main>
+  <script>
+  (function () {
+    'use strict';
+    var statusLine = document.getElementById('status');
+    var registerLine = document.getElementById('register');
+    var cacheLine = document.getElementById('cache');
+    var registered = null;   /* null while pending, then true or false */
+    var cacheReady = false;
+    var cacheFailed = false;
+    var confirming = false;
+    var retryAt = 0;
+
+    function render() {
+      registerLine.textContent = 'Home screen registration: ' +
+        (registered === null ? 'waiting' : registered ? 'verified' : 'failed');
+      cacheLine.textContent = 'Offline cache: ' +
+        (cacheFailed ? 'failed' : cacheReady ? 'ready' : 'caching');
+      if (registered === false || cacheFailed) {
+        statusLine.textContent = 'PS5 AirPlay was not installed. Send airplay-installer.elf again.';
+      } else if (registered && cacheReady) {
+        statusLine.textContent = 'PS5 AirPlay is ready. Open it from the home screen. ' +
+          'If the icon does not appear, restart the PS5 once.';
+      }
+    }
+
+    /* The native result is the only source for the registration line. */
+    function pollStatus() {
+      return fetch('/status', { cache: 'no-store' }).then(function (response) {
+        return response.text();
+      }).then(function (text) {
+        if (text.indexOf('result=registered') === 0) {
+          registered = true;
+        } else if (text.indexOf('result=failed') === 0) {
+          registered = false;
+        }
+      }).catch(function () {});
+    }
+
+    /* AppCache readiness is read directly, because cached/noupdate events can
+     * be missed on PS5 WebKit while the page is open. */
+    function checkCache() {
+      var cache = window.applicationCache;
+      if (!cache) {
+        cacheFailed = true;
+        return;
+      }
+      if (cache.status === cache.UPDATEREADY) {
+        try { cache.swapCache(); } catch (error) {}
+      }
+      if (cache.status === cache.IDLE) {
+        cacheReady = true;
+      } else if (cache.status === cache.OBSOLETE) {
+        cacheFailed = true;
+      }
+    }
+
+    /* /install ends the installer's wait once the cache is complete.  It also
+     * retries registration, so a failed attempt is repeated a few seconds later. */
+    function confirmCache() {
+      if (!cacheReady || confirming || Date.now() < retryAt) {
+        return;
+      }
+      confirming = true;
+      fetch('/install', { cache: 'no-store' }).then(function (response) {
+        if (!response.ok) {
+          retryAt = Date.now() + 3000;
+        }
+      }).catch(function () {
+        retryAt = Date.now() + 3000;
+      }).then(function () {
+        confirming = false;
+        return pollStatus();
+      });
+    }
+
+    function tick() {
+      checkCache();
+      confirmCache();
+      pollStatus().then(render);
+    }
+
+    if (window.applicationCache) {
+      window.applicationCache.addEventListener('error', function () {
+        if (window.applicationCache.status !== window.applicationCache.IDLE) {
+          cacheFailed = true;
+        }
+      }, false);
+    }
+    tick();
+    setInterval(tick, 1000);
+  }());
+  </script>
+</body>
+</html>
