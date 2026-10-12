@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icon0.png" alt="PS5 AirPlay" width="160">
+</p>
+
 # PS5 AirPlay
 
 An AirPlay screen-mirroring receiver for jailbroken PS5 consoles. Mirror an iPhone, iPad or Mac to the TV the console is plugged into, with sound, from the home screen or on top of a game.
