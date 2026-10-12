@@ -8,10 +8,9 @@ An AirPlay screen-mirroring receiver for jailbroken PS5 consoles. Mirror an iPho
 
 It runs as a payload: no package to install, no firmware to modify.
 
-<p align="center">
-  <a href="media/demo.mp4"><img src="media/demo.gif" alt="An iPhone mirrored to a PS5" width="280"></a>
-</p>
-<p align="center"><sub>An iPhone playing Instagram Reels, recorded with the console's own capture. <a href="media/demo.mp4">Full capture: 1080p, 60 fps, with sound.</a></sub></p>
+https://github.com/user-attachments/assets/6a3c0855-d9c1-421c-8dd3-5f5688562d38
+
+<p align="center"><sub>An iPhone playing Instagram Reels, recorded with the console's own capture.</sub></p>
 
 ## What it does
 
