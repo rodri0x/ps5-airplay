@@ -40,11 +40,11 @@ You need a jailbroken PS5 running an ELF loader on port 9021 (for example [ps5-p
    socat -t 99999999 - TCP:<ps5-ip>:9021 < airplay-installer.elf
    ```
 
-3. Open **PS5 AirPlay** from the home screen once. That starts the receiver.
-
 On the iPhone: Control Center → Screen Mirroring → pick the console.
 
-The installer adds the home-screen shortcut and copies the receiver to `/data/ps5-airplay`. The receiver does not start on boot; open the shortcut after each restart of the console.
+The installer adds the **PS5 AirPlay** shortcut to the home screen, copies the receiver to `/data/ps5-airplay` and starts it.
+
+The receiver does not start on boot. After a restart of the console, open the shortcut: it asks the ELF loader to start the receiver, which needs elfldr 0.25 or newer. With an older loader, send the installer again instead.
 
 ## Settings
 
