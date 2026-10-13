@@ -33,6 +33,7 @@ typedef struct {
     airplay_pairing_session_t pairing;
     rtsp_mirror_end_callback_t mirror_end_callback;
     void *mirror_end_opaque;
+    char name[64];
     char passcode[8];
     airplay_srp_t srp;
     airplay_paired_t paired;
@@ -57,6 +58,7 @@ void rtsp_server_set_identity(rtsp_server_t *server,
 void rtsp_server_close(rtsp_server_t *server);
 int rtsp_server_poll(rtsp_server_t *server, int timeout_ms);
 int rtsp_server_set_enabled(rtsp_server_t *server, int enabled);
+void rtsp_server_set_name(rtsp_server_t *server, const char *name);
 void rtsp_server_set_passcode(rtsp_server_t *server, const char *passcode);
 void rtsp_server_set_video_callback(rtsp_server_t *server,
                                     rtsp_video_callback_t callback, void *opaque);

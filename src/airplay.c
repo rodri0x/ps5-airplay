@@ -135,14 +135,14 @@ int main(void) {
         receiver_log("main", "mDNS initialization failed\n");
         return EXIT_FAILURE;
     }
+    if (mdns_server_set_name(&mdns, settings.name) != 0) {
+        receiver_log("main", "invalid saved receiver name; using default\n");
+        airplay_settings_defaults(&settings);
+    }
     if (identity_ready) {
         char public_key[65];
         airplay_identity_public_hex(&identity, public_key);
         (void)mdns_server_set_public_key(&mdns, public_key);
-    }
-    if (mdns_server_set_name(&mdns, settings.name) != 0) {
-        receiver_log("main", "invalid saved receiver name; using default\n");
-        airplay_settings_defaults(&settings);
     }
     (void)mdns_server_set_enabled(&mdns, settings.enabled);
     rtsp_server_t rtsp;
@@ -157,6 +157,7 @@ int main(void) {
     rtsp_server_set_video_callback(&rtsp, video_callback, NULL);
     rtsp_server_set_audio_callback(&rtsp, audio_callback, NULL);
     rtsp_server_set_mirror_end_callback(&rtsp, mirror_end_callback, NULL);
+    rtsp_server_set_name(&rtsp, mdns_server_name(&mdns));
     rtsp_server_set_passcode(&rtsp, settings.passcode);
     (void)mdns_server_set_pin_required(&mdns, settings.passcode[0] != '\0');
     (void)rtsp_server_set_enabled(&rtsp, settings.enabled);

@@ -298,6 +298,9 @@ int mdns_server_set_name(mdns_server_t *server, const char *name) {
             return -1;
         }
     }
+    if (server->enabled && strcmp(server->display_name, name) != 0) {
+        (void)mdns_server_send_goodbye(server);
+    }
     snprintf(server->display_name, sizeof(server->display_name), "%s", name);
     return server->enabled ? mdns_server_announce(server) : 0;
 }

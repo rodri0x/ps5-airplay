@@ -530,7 +530,7 @@ static int handle_request(rtsp_server_t *server, const rtsp_request_t *request,
     if (strcmp(request->method, "GET") == 0 && strcmp(path, "/info") == 0) {
         uint8_t response[8192];
         size_t response_length = bplist_build_info(
-            response, sizeof(response), AIRPLAY_NAME, AIRPLAY_DEVICE_ID,
+            response, sizeof(response), server->name, AIRPLAY_DEVICE_ID,
             feature_number(), AIRPLAY_MODEL, AIRPLAY_SRCVERS);
         if (response_length == 0) {
             return respond(fd, request, 500, NULL, NULL, 0, 0);
@@ -781,6 +781,7 @@ int rtsp_server_init(rtsp_server_t *server) {
     server->listen_fd = -1;
     server->client_fd = -1;
     server->enabled = 1;
+    rtsp_server_set_name(server, AIRPLAY_NAME);
     server->fairplay = airplay_fairplay_create();
     if (!server->fairplay) {
         receiver_log("rtsp", "init failed: fairplay state");
@@ -898,6 +899,13 @@ void rtsp_server_set_identity(rtsp_server_t *server,
     if (server) {
         server->identity = identity;
     }
+}
+
+void rtsp_server_set_name(rtsp_server_t *server, const char *name) {
+    if (!server || !name) {
+        return;
+    }
+    snprintf(server->name, sizeof(server->name), "%s", name);
 }
 
 void rtsp_server_set_passcode(rtsp_server_t *server, const char *passcode) {

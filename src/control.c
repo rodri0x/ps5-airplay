@@ -285,9 +285,11 @@ static int apply_settings(control_server_t *server, const char *json) {
     if (result > 0) {
         next.enabled = enabled;
     }
-    if (strcmp(next.name, server->settings->name) != 0 &&
-        mdns_server_set_name(server->mdns, next.name) != 0) {
-        return 422;
+    if (strcmp(next.name, server->settings->name) != 0) {
+        if (mdns_server_set_name(server->mdns, next.name) != 0) {
+            return 422;
+        }
+        rtsp_server_set_name(server->rtsp, next.name);
     }
     if (next.enabled != server->settings->enabled) {
         (void)mdns_server_set_enabled(server->mdns, next.enabled);
