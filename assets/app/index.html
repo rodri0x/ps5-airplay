@@ -375,10 +375,11 @@
         return next;
       });
     }
+    /* elfldr keeps the response open as the receiver's output, so the body
+     * never ends while the receiver runs. */
     function launchReceiver() {
       return fetch(ELFLDR, { mode: 'cors', cache: 'no-store' }).then(function (response) {
         if (!response.ok) throw new Error('elfldr HTTP ' + response.status);
-        return response.text();
       });
     }
     function waitForReceiver(attempt) {
