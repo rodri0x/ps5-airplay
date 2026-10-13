@@ -11,3 +11,4 @@
 #define AIRPLAY_HOMESCREEN_DB "/system_data/priv/mms/app.db"
 #define AIRPLAY_INSTALLER_VERSION "4"
 #define AIRPLAY_INSTALLER_PORT 18186
+#define AIRPLAY_ELFLDR_PORT 9021

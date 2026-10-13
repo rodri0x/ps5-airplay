@@ -3,12 +3,15 @@
 #include "embedded_assets.h"
 #include "installer_config.h"
 
+#include <arpa/inet.h>
 #include <errno.h>
+#include <netinet/in.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
@@ -187,6 +190,35 @@ static int stop_previous_receivers(void) {
     return count;
 }
 
+/* A raw ELF on the loader port is the one request every elfldr release accepts. */
+static int start_receiver(void) {
+    int fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd < 0) {
+        return -1;
+    }
+    struct sockaddr_in address;
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    address.sin_port = htons(AIRPLAY_ELFLDR_PORT);
+    if (connect(fd, (struct sockaddr *)&address, sizeof(address)) != 0) {
+        fprintf(stderr, "[installer] connect(elfldr): %s\n", strerror(errno));
+        close(fd);
+        return -1;
+    }
+    size_t sent = 0;
+    while (sent < airplay_elf_size) {
+        ssize_t count = send(fd, airplay_elf_data + sent, airplay_elf_size - sent, 0);
+        if (count <= 0) {
+            break;
+        }
+        sent += (size_t)count;
+    }
+    (void)shutdown(fd, SHUT_WR);
+    close(fd);
+    return sent == airplay_elf_size ? 0 : -1;
+}
+
 static int remove_existing_shortcut(void) {
     char app_dir[256];
     char sce_sys_dir[256];
@@ -301,6 +333,7 @@ int app_install_payload_and_shortcut(void) {
         return -1;
     }
     const char *library = write_library_copy() == 0 ? "ok" : "failed";
+    const char *receiver = start_receiver() == 0 ? "started" : "not-started";
     remove_rejected_title();
 
     struct stat title_status;
@@ -356,8 +389,9 @@ int app_install_payload_and_shortcut(void) {
 
     (void)snprintf(status, sizeof(status),
                    "result=registered|title=%s|method=%s|found=yes|library=%s|"
-                   "receivers_stopped=%d|uninstall=0x%x",
-                   AIRPLAY_TITLE_ID, method, library, receivers_stopped, uninstall_error);
+                   "receiver=%s|receivers_stopped=%d|uninstall=0x%x",
+                   AIRPLAY_TITLE_ID, method, library, receiver, receivers_stopped,
+                   uninstall_error);
     publish_status(status);
     ps5_notify("PS5 AirPlay shortcut installed");
     return 0;
