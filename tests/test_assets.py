@@ -40,7 +40,7 @@ class AssetTests(unittest.TestCase):
     def test_appcache_contains_launcher(self):
         manifest = (ROOT / "assets/airplay.appcache").read_text()
         self.assertIn("CACHE MANIFEST", manifest)
-        self.assertIn("PS5 AirPlay AppCache v8", manifest)
+        self.assertIn("PS5 AirPlay AppCache v9", manifest)
         self.assertIn("/app/index.html", manifest)
 
     def test_placeholder_icon_is_present(self):

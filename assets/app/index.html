@@ -399,7 +399,7 @@
       }).then(function (next) {
         draw(next);
       }).catch(function (error) {
-        setStatus('Start elfldr first, then open PS5 AirPlay again', 'warn');
+        setStatus('The receiver did not start. Send airplay-installer.elf again, or update elfldr to 0.25 or newer.', 'warn');
         footerStatus.textContent = error.message;
       });
     }
