@@ -74,6 +74,16 @@ typedef struct app_launch_ctx {
     uint32_t check_flag;
 } app_launch_ctx_t;
 
+typedef struct shell_uri_param {
+    uint32_t structsize;
+    uint32_t user_id;
+} shell_uri_param_t;
+
+#define SHELL_UI_UTIL "/system_ex/common_ex/lib/libSceShellUIUtil.sprx"
+#define HOME_SCREEN_URI "pshomeui:navigateToHome?bootCondition=psButton"
+
+int sceKernelLoadStartModule(const char *path, size_t args, const void *argp,
+                             uint32_t flags, void *option, int *status);
 int sceUserServiceInitialize(void *);
 int sceUserServiceGetForegroundUser(uint32_t *user_id);
 int sceSystemServiceGetAppIdOfRunningBigApp(void);
@@ -200,6 +210,35 @@ static pid_t find_pid(const char *name) {
     }
     free(buffer);
     return pid;
+}
+
+/* The settings page is a web view of the console interface, which stays above
+ * an app started behind it.  Going to the home screen closes it. */
+static void go_to_home_screen(void) {
+    static int (*initialize)(void);
+    static int (*launch_by_uri)(const char *, shell_uri_param_t *);
+    if (!launch_by_uri) {
+        const int handle = sceKernelLoadStartModule(SHELL_UI_UTIL, 0, NULL, 0, NULL, NULL);
+        if (handle < 0) {
+            carrier_log("loading libSceShellUIUtil failed: 0x%x", handle);
+            return;
+        }
+        initialize = (void *)kernel_dynlib_dlsym(-1, (uint32_t)handle, "sceShellUIUtilInitialize");
+        launch_by_uri = (void *)kernel_dynlib_dlsym(-1, (uint32_t)handle, "sceShellUIUtilLaunchByUri");
+        if (!initialize || !launch_by_uri) {
+            carrier_log("libSceShellUIUtil lacks the launch-by-URI calls");
+            launch_by_uri = NULL;
+            return;
+        }
+        (void)initialize();
+    }
+    shell_uri_param_t param = {sizeof(param), 0};
+    if (sceUserServiceGetForegroundUser(&param.user_id)) {
+        return;
+    }
+    const int result = launch_by_uri(HOME_SCREEN_URI, &param);
+    carrier_log("home screen requested -> 0x%x", result);
+    usleep(300000);
 }
 
 static void *launch_thread(void *arg) {
@@ -338,6 +377,7 @@ static int carrier_app_start(void) {
     }
     memcpy(elf, display_host_elf_data, display_host_elf_size);
 
+    go_to_home_screen();
     pid_t pid = carrier_app_launch();
     if (pid < 0) {
         free(elf);
